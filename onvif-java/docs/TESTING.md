@@ -1,0 +1,1 @@
+[main] WARN org.apache.cxf.phase.PhaseInterceptorChain - Interceptor for {http://www.onvif.org/ver10/device/wsdl}DeviceService#{http://www.onvif.org/ver10/device/wsdl}GetDeviceInformation has thrown exception, unwinding now

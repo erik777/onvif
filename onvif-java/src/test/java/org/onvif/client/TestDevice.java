@@ -28,173 +28,201 @@ import org.w3c.dom.NodeList;
 
 /** @author Brad Lowe */
 public class TestDevice {
-  private static final Logger LOG = LoggerFactory.getLogger(TestDevice.class);
+	private static final Logger LOG = LoggerFactory.getLogger(TestDevice.class);
 
-  public static String testCamera(OnvifCredentials creds) throws SOAPException, IOException {
-    URL u =
-        creds.getHost().startsWith("http")
-            ? new URL(creds.getHost())
-            : new URL("http://" + creds.getHost());
-    return testCamera(u, creds.getUser(), creds.getPassword());
-  }
+	public static String testCamera(OnvifCredentials creds) throws SOAPException, IOException {
+		URL u = creds.getHost().startsWith("http") ? new URL(creds.getHost()) : new URL("http://" + creds.getHost());
+		return testCamera(u, creds.getUser(), creds.getPassword());
+	}
 
-  static String sep = "\n";
+	static String sep = "\n";
 
-  // This method returns information about an initialized OnvifDevice.
-  // This could throw an uncaught SOAP or other error on some cameras...
-  // Would accept Pull Requests on printing out additional information about devices.
-  public static String inspect(OnvifDevice device) {
-    String out = "";
-    DeviceInfo info = device.getDeviceInfo();
-    out += "DeviceInfo:" + sep + "\t" + info + sep;
-    DeviceServiceCapabilities caps = device.getDevice().getServiceCapabilities();
-    String sysCaps = OnvifUtils.format(caps);
-    sysCaps = sysCaps.replace("],", "],\t\n");
+	private static void pause(long millis, String msg) {
+		try {
+			Thread.currentThread().sleep(millis);
+		} catch (InterruptedException e1) {
+		}
+		System.out.println(msg);
+	}
 
-    out += "\tgetServiceCapabilities: " + sysCaps + sep;
-    // out += "\tgetServiceCapabilities.getSystem: " + OnvifUtils.format(caps.getSystem()) + sep;
+	public static long pauseTime = 900;
 
-    Media media = device.getMedia();
+	// This method returns information about an initialized OnvifDevice.
+	// This could throw an uncaught SOAP or other error on some cameras...
+	// Would accept Pull Requests on printing out additional information about
+	// devices.
+	public static String inspect(OnvifDevice device) {
+		System.out.println("inspect...");
 
-    media.getVideoSources();
-    List<Profile> profiles = media.getProfiles();
-    out += "Media Profiles: " + profiles.size() + sep;
-    for (Profile profile : profiles) {
-      String profileToken = profile.getToken();
-      String rtsp = device.getStreamUri(profileToken);
-      out += "\tProfile: " + profile.getName() + " token=" + profile.getToken() + sep;
-      out += "\t\tstream: " + rtsp + sep;
-      out += "\t\tsnapshot: " + device.getSnapshotUri(profileToken) + sep;
-      out += "\t\tdetails:" + OnvifUtils.format(profile) + sep;
-    }
+		String out = "";
+		pause(pauseTime, "info...");
+		DeviceInfo info = device.getDeviceInfo();
+		pause(pauseTime, "info!");
+		System.out.println("capabilities...");
+		DeviceServiceCapabilities caps = device.getDevice().getServiceCapabilities();
+		String sysCaps = OnvifUtils.format(caps);
+		sysCaps = sysCaps.replace("],", "],\t\n");
 
-    try {
-      List<VideoSource> videoSources = media.getVideoSources();
-      out += "VideoSources: " + videoSources.size() + sep;
-      for (VideoSource v : videoSources) out += "\t" + OnvifUtils.format(v) + sep;
+		out += "\tgetServiceCapabilities: " + sysCaps + sep;
+		// out += "\tgetServiceCapabilities.getSystem: " +
+		// OnvifUtils.format(caps.getSystem()) + sep;
 
-      ImagingPort imaging = device.getImaging();
-      if (imaging != null && videoSources.size() > 0) {
-        String token = videoSources.get(0).getToken();
+		pause(pauseTime, "capabilities... " + out);
+		System.out.println("media... ");
+		Media media = device.getMedia();
 
-        out += "Imaging:" + token + sep;
-        try {
-          org.onvif.ver20.imaging.wsdl.Capabilities image_caps = imaging.getServiceCapabilities();
-          out += "\tgetServiceCapabilities=" + OnvifUtils.format(image_caps) + sep;
+		pause(pauseTime, "video sources... ");
+		media.getVideoSources();
+		pause(pauseTime, "profiles... ");
+		List<Profile> profiles = media.getProfiles();
+		out += "Media Profiles: " + profiles.size() + sep;
+		for (Profile profile : profiles) {
+			String profileToken = profile.getToken();
+			pause(pauseTime, "stream uri... ");
+			String rtsp = device.getStreamUri(profileToken);
+			out += "\tProfile: " + profile.getName() + " token=" + profile.getToken() + sep;
+			out += "\t\tstream: " + rtsp + sep;
+			pause(pauseTime, "getSnapshotUri... ");
+			out += "\t\tsnapshot: " + device.getSnapshotUri(profileToken) + sep;
+			out += "\t\tdetails:" + OnvifUtils.format(profile) + sep;
+		}
+		pause(pauseTime, "getVideoSources... ");
 
-          if (token != null) {
-            out +=
-                "\tgetImagingSettings="
-                    + OnvifUtils.format(imaging.getImagingSettings(token))
-                    + sep;
-            out += "\tgetMoveOptions=" + OnvifUtils.format(imaging.getMoveOptions(token)) + sep;
-            out += "\tgetStatus=" + OnvifUtils.format(imaging.getStatus(token)) + sep;
-            out += "\tgetOptions=" + OnvifUtils.format(imaging.getOptions(token)) + sep;
-          }
-        } catch (Throwable th) {
-          out += "Imaging unavailable:" + th.getMessage() + sep;
-        }
-      }
-    } catch (Throwable th) {
-      // this can fail if the device doesn't support video sources.
-      out += "VideoSources: " + th.getMessage() + sep;
-    }
-    try {
-      // This may throw a SoapFaultException with the message "This device does not support audio"
-      List<AudioSource> audioSources = media.getAudioSources();
-      out += "AudioSources: " + audioSources.size() + sep;
-      for (AudioSource a : audioSources) out += "\t" + OnvifUtils.format(a) + sep;
-    } catch (Throwable th) {
-      out += "AudioSources Unavailable: " + th.getMessage() + sep;
-    }
+		try {
+			List<VideoSource> videoSources = media.getVideoSources();
+			out += "VideoSources: " + videoSources.size() + sep;
+			for (VideoSource v : videoSources)
+				out += "\t" + OnvifUtils.format(v) + sep;
 
-    try {
-      EventPortType events = device.getEvents();
-      if (events != null) {
-        out += "Events:" + sep;
-        out +=
-            "\tgetServiceCapabilities=" + OnvifUtils.format(events.getServiceCapabilities()) + sep;
+			pause(pauseTime, "getImaging... ");
+			ImagingPort imaging = device.getImaging();
+			if (imaging != null && videoSources.size() > 0) {
+				String token = videoSources.get(0).getToken();
 
-        GetEventProperties getEventProperties = new GetEventProperties();
-        GetEventPropertiesResponse getEventPropertiesResp =
-            events.getEventProperties(getEventProperties);
-        out += "\tMessageContentFilterDialects:" + sep;
-        for (String f : getEventPropertiesResp.getMessageContentFilterDialect())
-          out += ("\t\t" + f + sep);
-        out += "\tTopicExpressionDialects:" + sep;
-        for (String f : getEventPropertiesResp.getTopicExpressionDialect())
-          out += ("\t\t" + f + sep);
+				out += "Imaging:" + token + sep;
+				try {
+					pause(pauseTime, "getServiceCapabilities... ");
+					org.onvif.ver20.imaging.wsdl.Capabilities image_caps = imaging.getServiceCapabilities();
+					out += "\tgetServiceCapabilities=" + OnvifUtils.format(image_caps) + sep;
 
-        out += "\tTopics:" + sep;
-        StringBuffer tree = new StringBuffer();
-        for (Object object : getEventPropertiesResp.getTopicSet().getAny()) {
-          Element e = (Element) object;
-          printTree(e, e.getNodeName(), tree);
-          // WsNotificationTest.printTree(e, e.getNodeName());
-        }
-        out += tree;
-      }
-    } catch (Throwable th) {
-      out += "Events Unavailable: " + th.getMessage() + sep;
-    }
-    PTZ ptz = device.getPtz();
-    if (ptz != null) {
+					if (token != null) {
+						pause(pauseTime, "getImagingSettings... ");
+						out += "\tgetImagingSettings=" + OnvifUtils.format(imaging.getImagingSettings(token)) + sep;
+						pause(pauseTime, "getImagingSettings... ");
+						out += "\tgetMoveOptions=" + OnvifUtils.format(imaging.getMoveOptions(token)) + sep;
+						pause(pauseTime, "getImagingSettings... ");
+						out += "\tgetStatus=" + OnvifUtils.format(imaging.getStatus(token)) + sep;
+						pause(pauseTime, "getImagingSettings... ");
+						out += "\tgetOptions=" + OnvifUtils.format(imaging.getOptions(token)) + sep;
+					}
+				} catch (Throwable th) {
+					out += "Imaging unavailable:" + th.getMessage() + sep;
+				}
+			}
+		} catch (Throwable th) {
+			// this can fail if the device doesn't support video sources.
+			out += "VideoSources: " + th.getMessage() + sep;
+		}
+		try {
+			// This may throw a SoapFaultException with the message "This device does not
+			// support audio"
+			pause(pauseTime, "getAudioSources... ");
+			List<AudioSource> audioSources = media.getAudioSources();
+			out += "AudioSources: " + audioSources.size() + sep;
+			for (AudioSource a : audioSources)
+				out += "\t" + OnvifUtils.format(a) + sep;
+		} catch (Throwable th) {
+			out += "AudioSources Unavailable: " + th.getMessage() + sep;
+		}
 
-      String profileToken = profiles.get(0).getToken();
-      try {
-        Capabilities ptz_caps = ptz.getServiceCapabilities();
-        out += "PTZ:" + sep;
-        out += "\tgetServiceCapabilities=" + OnvifUtils.format(ptz_caps) + sep;
-        PTZStatus s = ptz.getStatus(profileToken);
-        out += "\tgetStatus=" + OnvifUtils.format(s) + sep;
-        // out += "ptz.getConfiguration=" + ptz.getConfiguration(profileToken) + sep;
-        List<PTZPreset> presets = ptz.getPresets(profileToken);
-        if (presets != null && !presets.isEmpty()) {
-          out += "\tPresets:" + presets.size() + sep;
-          for (PTZPreset p : presets) out += "\t\t" + OnvifUtils.format(p) + sep;
-        }
-      } catch (Throwable th) {
-        out += "PTZ: Unavailable" + th.getMessage() + sep;
-      }
-    }
+		try {
+			EventPortType events = device.getEvents();
+			if (events != null) {
+				out += "Events:" + sep;
+				pause(pauseTime, "getServiceCapabilities... ");
+				out += "\tgetServiceCapabilities=" + OnvifUtils.format(events.getServiceCapabilities()) + sep;
 
-    return out;
-  }
+				pause(pauseTime, "getEventProperties... ");
+				GetEventProperties getEventProperties = new GetEventProperties();
+				GetEventPropertiesResponse getEventPropertiesResp = events.getEventProperties(getEventProperties);
+				out += "\tMessageContentFilterDialects:" + sep;
+				for (String f : getEventPropertiesResp.getMessageContentFilterDialect())
+					out += ("\t\t" + f + sep);
+				out += "\tTopicExpressionDialects:" + sep;
+				for (String f : getEventPropertiesResp.getTopicExpressionDialect())
+					out += ("\t\t" + f + sep);
 
-  public static void printTree(Node node, String name, StringBuffer buffer) {
+				out += "\tTopics:" + sep;
+				StringBuffer tree = new StringBuffer();
+				for (Object object : getEventPropertiesResp.getTopicSet().getAny()) {
+					Element e = (Element) object;
+					printTree(e, e.getNodeName(), tree);
+					// WsNotificationTest.printTree(e, e.getNodeName());
+				}
+				out += tree;
+			}
+		} catch (Throwable th) {
+			out += "Events Unavailable: " + th.getMessage() + sep;
+		}
+		PTZ ptz = device.getPtz();
+		if (ptz != null) {
 
-    if (node.hasChildNodes()) {
-      NodeList nodes = node.getChildNodes();
-      for (int i = 0; i < nodes.getLength(); i++) {
-        Node n = nodes.item(i);
-        printTree(n, name + " - " + n.getNodeName(), buffer);
-      }
-    } else {
-      buffer.append("\t\t" + name + " - " + node.getNodeName() + "\n");
-    }
-  }
+			String profileToken = profiles.get(0).getToken();
+			try {
+				Capabilities ptz_caps = ptz.getServiceCapabilities();
+				out += "PTZ:" + sep;
+				out += "\tgetServiceCapabilities=" + OnvifUtils.format(ptz_caps) + sep;
+				PTZStatus s = ptz.getStatus(profileToken);
+				out += "\tgetStatus=" + OnvifUtils.format(s) + sep;
+				// out += "ptz.getConfiguration=" + ptz.getConfiguration(profileToken) + sep;
+				List<PTZPreset> presets = ptz.getPresets(profileToken);
+				if (presets != null && !presets.isEmpty()) {
+					out += "\tPresets:" + presets.size() + sep;
+					for (PTZPreset p : presets)
+						out += "\t\t" + OnvifUtils.format(p) + sep;
+				}
+			} catch (Throwable th) {
+				out += "PTZ: Unavailable" + th.getMessage() + sep;
+			}
+		}
 
-  public static String testCamera(URL url, String user, String password)
-      throws SOAPException, IOException {
-    LOG.info("Testing camera:" + url);
-    OnvifDevice device = new OnvifDevice(url, user, password);
-    
+		return out;
+	}
+
+	public static void printTree(Node node, String name, StringBuffer buffer) {
+
+		if (node.hasChildNodes()) {
+			NodeList nodes = node.getChildNodes();
+			for (int i = 0; i < nodes.getLength(); i++) {
+				Node n = nodes.item(i);
+				printTree(n, name + " - " + n.getNodeName(), buffer);
+			}
+		} else {
+			buffer.append("\t\t" + name + " - " + node.getNodeName() + "\n");
+		}
+	}
+
+	public static String testCamera(URL url, String user, String password) throws SOAPException, IOException {
+		LOG.info("Testing camera:" + url);
+		OnvifDevice device = new OnvifDevice(url, user, password);
+
 //    LOG.info( String.format("Connected to device %s %n", device.getDeviceInfo()) );
-    System.out.printf("Connected to device %s %n", device.getDeviceInfo());
-    LOG.info("Inspecting:" + device);
-    return inspect(device);
-  }
+		System.out.printf("Connected to device %s %n", device.getDeviceInfo());
+		LOG.info("Inspecting:" + device);
+		return inspect(device);
+//    return "OK";
+	}
 
-  public static void main(String[] args) {
-    OnvifCredentials creds = GetTestDevice.getOnvifCredentials(args);
-    try {
-      // OnvifDevice.setVerbose(true);
-      String out = testCamera(creds);
+	public static void main(String[] args) {
+		OnvifCredentials creds = GetTestDevice.getOnvifCredentials(args);
+		try {
+			// OnvifDevice.setVerbose(true);
+			String out = testCamera(creds);
 
-      LOG.info("\n" + out + "\n");
-    } catch (Throwable th) {
-      LOG.error("Failed for " + creds, th);
-      th.printStackTrace();
-    }
-  }
+			LOG.info("\n" + out + "\n");
+		} catch (Throwable th) {
+			LOG.error("Failed for " + creds, th);
+			th.printStackTrace();
+		}
+	}
 }
