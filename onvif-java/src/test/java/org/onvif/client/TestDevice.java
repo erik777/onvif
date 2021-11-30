@@ -178,6 +178,10 @@ public class TestDevice {
       throws SOAPException, IOException {
     LOG.info("Testing camera:" + url);
     OnvifDevice device = new OnvifDevice(url, user, password);
+    
+//    LOG.info( String.format("Connected to device %s %n", device.getDeviceInfo()) );
+    System.out.printf("Connected to device %s %n", device.getDeviceInfo());
+    LOG.info("Inspecting:" + device);
     return inspect(device);
   }
 
