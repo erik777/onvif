@@ -39,13 +39,14 @@ public class TestDevice {
 
 	private static void pause(long millis, String msg) {
 		try {
-			Thread.currentThread().sleep(millis);
+			if (millis > 0)
+				Thread.currentThread().sleep(millis);
 		} catch (InterruptedException e1) {
 		}
 		System.out.println(msg);
 	}
 
-	public static long pauseTime = 1000;
+	public static long pauseTime = 0;
 
 	// This method returns information about an initialized OnvifDevice.
 	// This could throw an uncaught SOAP or other error on some cameras...
