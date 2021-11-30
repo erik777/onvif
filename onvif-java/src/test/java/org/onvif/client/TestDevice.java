@@ -45,7 +45,7 @@ public class TestDevice {
 		System.out.println(msg);
 	}
 
-	public static long pauseTime = 900;
+	public static long pauseTime = 1000;
 
 	// This method returns information about an initialized OnvifDevice.
 	// This could throw an uncaught SOAP or other error on some cameras...

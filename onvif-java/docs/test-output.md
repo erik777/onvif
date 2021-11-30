@@ -1,13 +1,5 @@
 # Test output
 
-
-
-```
-
-```
-
-
-
 ```
 [main] INFO org.onvif.client.TestDevice - 
 getServiceCapabilities: [network=[ipFilter=true,zeroConfiguration=true,ipVersion6=true,dynDNS=true,dot11Configuration=,dot1XConfigurations=,hostnameFromDHCP=,ntp=1,dhcPv6=true,otherAttributes={}], 
