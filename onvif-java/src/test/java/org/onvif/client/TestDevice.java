@@ -13,6 +13,7 @@ import org.onvif.ver10.events.wsdl.GetEventProperties;
 import org.onvif.ver10.events.wsdl.GetEventPropertiesResponse;
 import org.onvif.ver10.media.wsdl.Media;
 import org.onvif.ver10.schema.AudioSource;
+import org.onvif.ver10.schema.MetadataConfiguration;
 import org.onvif.ver10.schema.PTZPreset;
 import org.onvif.ver10.schema.PTZStatus;
 import org.onvif.ver10.schema.Profile;
@@ -137,6 +138,21 @@ public class TestDevice {
 		}
 		
     	try {
+    		List<MetadataConfiguration> aConfigs = media.getMetadataConfigurations();
+			if (aConfigs != null && aConfigs.size() > 0) {
+				out += "MetadataConfiguration items: " + aConfigs.size() + sep;
+				for (MetadataConfiguration cfg : aConfigs)
+					
+					out += "\t" + cfg.getName() + ": " + cfg.toString() + sep;
+			} else {
+				out += "No MetadataConfiguration items returned" + sep;
+			}
+			//here
+		} catch (Throwable th) {
+			out += "! ERROR Cannot obtain media.getMetadataConfigurations(): " + th.getMessage() + sep;
+		}
+
+    	try {
 			List<VideoAnalyticsConfiguration> aConfigs = media.getVideoAnalyticsConfigurations();
 			if (aConfigs != null && aConfigs.size() > 0) {
 				out += "VideoAnalyticsConfiguration items: " + aConfigs.size() + sep;
@@ -165,6 +181,7 @@ public class TestDevice {
 			out += "AudioSources Unavailable: " + th.getMessage() + sep;
 		}
 
+		boolean showTopics = false;
 		try {
 			EventPortType events = device.getEvents();
 			if (events != null) {
@@ -183,13 +200,15 @@ public class TestDevice {
 					out += ("\t\t" + f + sep);
 
 				out += "\tTopics:" + sep;
-				StringBuffer tree = new StringBuffer();
-				for (Object object : getEventPropertiesResp.getTopicSet().getAny()) {
-					Element e = (Element) object;
-					printTree(e, e.getNodeName(), tree);
-					// WsNotificationTest.printTree(e, e.getNodeName());
+				if (showTopics) {
+					StringBuffer tree = new StringBuffer();
+					for (Object object : getEventPropertiesResp.getTopicSet().getAny()) {
+						Element e = (Element) object;
+						printTree(e, e.getNodeName(), tree);
+						// WsNotificationTest.printTree(e, e.getNodeName());
+					}
+					out += tree;
 				}
-				out += tree;
 			}
 		} catch (Throwable th) {
 			out += "Events Unavailable: " + th.getMessage() + sep;
