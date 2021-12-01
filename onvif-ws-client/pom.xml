@@ -74,7 +74,7 @@
       <plugin>
         <groupId>org.apache.cxf</groupId>
         <artifactId>cxf-codegen-plugin</artifactId>
-        <version>3.3.2</version>
+        <version>3.4.5</version>
         <executions>
           <execution>
             <id>generate-ws-stubs</id>
@@ -91,6 +91,7 @@
               -->
               <includes>
                 <include>*.wsdl</include>
+                <include>VER20/*.wsdl</include>
               </includes>
               <defaultOptions>
                 <extraargs>

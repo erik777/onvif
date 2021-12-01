@@ -754,4 +754,17 @@
 			</wsdl:output>
 		</wsdl:operation>
 	</wsdl:binding>
+
+	<!--===============================-->
+	<!--===============================-->
+
+  <wsdl:service name="AnalyticsService">
+    <wsdl:port name="AnalyticsEnginePort" binding="tan:AnalyticsEngineBinding">
+      <soap:address location="http://www.onvif.org/ver20/analytics/wsdl"/>
+    </wsdl:port>
+    <wsdl:port name="RuleEnginePort" binding="tan:RuleEngineBinding">
+      <soap:address location="http://www.onvif.org/ver20/analytics/wsdl"/>
+    </wsdl:port>
+  </wsdl:service>
+
 </wsdl:definitions>

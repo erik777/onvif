@@ -4439,4 +4439,9 @@ IN NO EVENT WILL THE CORPORATION OR ITS MEMBERS OR THEIR AFFILIATES BE LIABLE FO
 	</wsdl:binding>
 	<!--===============================-->
 	<!--===============================-->
+  <wsdl:service name="DeviceService">
+    <wsdl:port name="DevicePort" binding="tds:DeviceBinding">
+      <soap:address location="http://www.onvif.org/ver10/device/wsdl/devicemgmt.wsdl"/>
+    </wsdl:port>
+  </wsdl:service>
 </wsdl:definitions>
