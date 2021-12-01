@@ -39,6 +39,8 @@ import org.onvif.ver10.schema.StreamType;
 import org.onvif.ver10.schema.Transport;
 import org.onvif.ver10.schema.TransportProtocol;
 import org.onvif.ver20.analytics.wsdl.AnalyticsEnginePort;
+import org.onvif.ver20.analytics.wsdl.AnalyticsService;
+import org.onvif.ver20.analytics.wsdl.RuleEnginePort;
 import org.onvif.ver20.imaging.wsdl.ImagingPort;
 import org.onvif.ver20.imaging.wsdl.ImagingService;
 import org.onvif.ver20.ptz.wsdl.PTZ;
@@ -61,6 +63,8 @@ public class OnvifDevice {
   private PTZ ptz;
   private ImagingPort imaging;
   private EventPortType events;
+  private RuleEnginePort rulesEngine;
+  private AnalyticsEnginePort analyticsEngine;
 
   private static boolean verbose = false; // enable/disable logging of SOAP messages
   final SimpleSecurityHandler securityHandler;
@@ -174,10 +178,16 @@ public class OnvifDevice {
 	logger.debug("Checking analytics capabilities");
     if (this.media != null && capabilities.getAnalytics() != null && capabilities.getAnalytics().getXAddr() != null) {
     	logger.debug("We have analytics capabilities");
-//    	new AnalyticsEngine().getAnalyticsEngineConfiguration().;
+    	AnalyticsService analytics = new AnalyticsService();
+    	this.rulesEngine = analytics.getRuleEnginePort();
+    	this.analyticsEngine = analytics.getAnalyticsEnginePort();
+        this.rulesEngine =
+                getServiceProxy((BindingProvider) rulesEngine, capabilities.getAnalytics().getXAddr())
+                    .create(RuleEnginePort.class);
+        this.analyticsEngine =
+                getServiceProxy((BindingProvider) analyticsEngine, capabilities.getAnalytics().getXAddr())
+                    .create(AnalyticsEnginePort.class);
     	//here
-//    	new AnalyticsEnginePort();
-    	// AnalyticsEnginePort
     }
   }
 
@@ -271,7 +281,13 @@ public class OnvifDevice {
     return events;
   }
 
-  public DateTime getDate() {
+  public RuleEnginePort getRulesEngine() {
+	return rulesEngine;
+}
+public AnalyticsEnginePort getAnalyticsEngine() {
+	return analyticsEngine;
+}
+public DateTime getDate() {
     return device.getSystemDateAndTime().getLocalDateTime();
   }
 

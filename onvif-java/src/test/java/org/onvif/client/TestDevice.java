@@ -234,6 +234,15 @@ public class TestDevice {
 				out += "PTZ: Unavailable" + th.getMessage() + sep;
 			}
 		}
+		
+		try {
+			org.onvif.ver20.analytics.wsdl.Capabilities ae_caps = device.getAnalyticsEngine().getServiceCapabilities();
+			out += "Analytics Engine:" + sep;
+			out += "\tgetServiceCapabilities=" + OnvifUtils.format(ae_caps) + sep;
+		} catch (Exception e) {
+		} catch (Throwable th) {
+			out += "AnalyticsEngine Unavailable: " + th.getMessage() + sep;
+		}
 
 		return out;
 	}
