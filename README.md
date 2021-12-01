@@ -26,6 +26,19 @@ If you need to change the list of managed WSDLs (in onvif/onvif-ws-client/src/ma
  1. **Run the class generation command**: decomment goal and phase of cxf-codegen-plugin in onvif-ws-client pom.xml and run ```mvn clean install```
  1. To see how to properly add a new ONVIF service to OnvifDevice look into OnvifDevice.init()
 
+UPGRADING
+=========
+
+When upgrading to a newer version of the wsdl, you'll need to add a service section near the end of the ONVIF original wsdl.  So, for media.wsdl, you'll add:
+
+```
+  <wsdl:service name="MediaService">
+    <wsdl:port name="MediaPort" binding="trt:MediaBinding">
+      <soap:address location="http://www.onvif.org/ver10/media/wsdl"/>
+    </wsdl:port>
+  </wsdl:service>
+``` 
+
 TODOS
 =============
 My next goals are:
