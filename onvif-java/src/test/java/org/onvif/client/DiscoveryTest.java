@@ -14,5 +14,6 @@ public class DiscoveryTest {
     for (URL u : urls) {
       LOG.info(u.toString());
     }
+    LOG.info("done");
   }
 }
