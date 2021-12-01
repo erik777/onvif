@@ -1,6 +1,7 @@
 package de.onvif.soap;
 
 import de.onvif.beans.DeviceInfo;
+
 import java.net.ConnectException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -27,6 +28,7 @@ import org.onvif.ver10.events.wsdl.EventPortType;
 import org.onvif.ver10.events.wsdl.EventService;
 import org.onvif.ver10.media.wsdl.Media;
 import org.onvif.ver10.media.wsdl.MediaService;
+import org.onvif.ver10.schema.AnalyticsEngine;
 import org.onvif.ver10.schema.Capabilities;
 import org.onvif.ver10.schema.CapabilityCategory;
 import org.onvif.ver10.schema.DateTime;
@@ -36,6 +38,7 @@ import org.onvif.ver10.schema.StreamSetup;
 import org.onvif.ver10.schema.StreamType;
 import org.onvif.ver10.schema.Transport;
 import org.onvif.ver10.schema.TransportProtocol;
+import org.onvif.ver20.analytics.wsdl.AnalyticsEnginePort;
 import org.onvif.ver20.imaging.wsdl.ImagingPort;
 import org.onvif.ver20.imaging.wsdl.ImagingService;
 import org.onvif.ver20.ptz.wsdl.PTZ;
@@ -167,6 +170,14 @@ public class OnvifDevice {
       this.events =
           getServiceProxy((BindingProvider) events, capabilities.getEvents().getXAddr())
               .create(EventPortType.class);
+    }
+	logger.debug("Checking analytics capabilities");
+    if (this.media != null && capabilities.getAnalytics() != null && capabilities.getAnalytics().getXAddr() != null) {
+    	logger.debug("We have analytics capabilities");
+//    	new AnalyticsEngine().getAnalyticsEngineConfiguration().;
+    	//here
+//    	new AnalyticsEnginePort();
+    	// AnalyticsEnginePort
     }
   }
 

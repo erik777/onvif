@@ -16,6 +16,7 @@ import org.onvif.ver10.schema.AudioSource;
 import org.onvif.ver10.schema.PTZPreset;
 import org.onvif.ver10.schema.PTZStatus;
 import org.onvif.ver10.schema.Profile;
+import org.onvif.ver10.schema.VideoAnalyticsConfiguration;
 import org.onvif.ver10.schema.VideoSource;
 import org.onvif.ver20.imaging.wsdl.ImagingPort;
 import org.onvif.ver20.ptz.wsdl.Capabilities;
@@ -79,12 +80,22 @@ public class TestDevice {
 		out += "Media Profiles: " + profiles.size() + sep;
 		for (Profile profile : profiles) {
 			String profileToken = profile.getToken();
-			pause(pauseTime, "stream uri... ");
+			pause(pauseTime, "stream uri... profile token: " + profileToken);
 			String rtsp = device.getStreamUri(profileToken);
 			out += "\tProfile: " + profile.getName() + " token=" + profile.getToken() + sep;
 			out += "\t\tstream: " + rtsp + sep;
+			if (profile.getMetadataConfiguration() != null) {
+//				profile.getMetadataConfiguration().get;
+				String metaToken = profile.getMetadataConfiguration().getToken();
+				out += "\t\tmetadata token: " + metaToken + sep;
+//				out += "\t\tmetadata stream: " + device.getStreamUri(new Integer(metaToken)) + sep;
+			}
 			pause(pauseTime, "getSnapshotUri... ");
-			out += "\t\tsnapshot: " + device.getSnapshotUri(profileToken) + sep;
+			try {
+				out += "\t\tsnapshot: " + device.getSnapshotUri(profileToken) + sep;
+			} catch (Exception e) {
+				out += "\t\tsnapshot: " + e.getMessage() + sep;
+			}
 			out += "\t\tdetails:" + OnvifUtils.format(profile) + sep;
 		}
 		pause(pauseTime, "getVideoSources... ");
@@ -124,6 +135,24 @@ public class TestDevice {
 			// this can fail if the device doesn't support video sources.
 			out += "VideoSources: " + th.getMessage() + sep;
 		}
+		
+    	try {
+			List<VideoAnalyticsConfiguration> aConfigs = media.getVideoAnalyticsConfigurations();
+			if (aConfigs != null && aConfigs.size() > 0) {
+				out += "VideoAnalyticsConfiguration items: " + aConfigs.size() + sep;
+				
+			} else {
+				out += "No VideoAnalyticsConfiguration items returned" + sep;
+			}
+			//here
+		} catch (Throwable th) {
+			out += "! ERROR Cannot obtain media.getVideoAnalyticsConfigurations(): " + th.getMessage() + sep;
+			// Cannot obtain media.getVideoAnalyticsConfigurations(): 
+			// Can not set org.onvif.ver10.schema.Object field org.onvif.ver10.schema.ItemList$ElementItem.any to 
+			// com.sun.org.apache.xerces.internal.dom.ElementNSImpl
+
+		}
+
 		try {
 			// This may throw a SoapFaultException with the message "This device does not
 			// support audio"
@@ -199,7 +228,7 @@ public class TestDevice {
 				printTree(n, name + " - " + n.getNodeName(), buffer);
 			}
 		} else {
-			buffer.append("\t\t" + name + " - " + node.getNodeName() + "\n");
+			buffer.append("\t\t" + name + " - [" + node.getNodeName() + "]\n");
 		}
 	}
 

@@ -48,224 +48,228 @@ import org.w3c.dom.NodeList;
 
 public class WsNotificationTest {
 
-  // This is a work in progress class...any help is welcome ;)
-  // A good idea could be to follow this guide:
-  // https://access.redhat.com/documentation/en-us/red_hat_jboss_a-mq/6.1/html-single/ws-notification_guide/index#WSNTutorial
+	private static void pause(long millis, String msg) {
+		try {
+			if (millis > 0)
+				Thread.currentThread().sleep(millis);
+		} catch (InterruptedException e1) {
+		}
+		System.out.println(msg);
+	}
 
-  public static void main(String[] args) throws IOException {
-    OnvifCredentials creds = GetTestDevice.getOnvifCredentials(args);
-    System.out.println("Connect to camera, please wait ...");
+	// This is a work in progress class...any help is welcome ;)
+	// A good idea could be to follow this guide:
+	// https://access.redhat.com/documentation/en-us/red_hat_jboss_a-mq/6.1/html-single/ws-notification_guide/index#WSNTutorial
 
-    OnvifDevice cam = null;
-    try {
-      cam = new OnvifDevice(creds.getHost(), creds.getUser(), creds.getPassword());
-    } catch (ConnectException | SOAPException e1) {
-      System.err.println("No connection to device with ip " + creds + ", please try again.");
-      System.exit(0);
-    }
-    System.out.println("Connected to device " + cam.getDeviceInfo());
+	public static void main(String[] args) throws IOException {
+		OnvifCredentials creds = GetTestDevice.getOnvifCredentials(args);
+		System.out.println("Connect to camera, please wait ...");
 
-    // get device capabilities
-    Capabilities cap = cam.getDevice().getCapabilities(Arrays.asList(CapabilityCategory.ALL));
-    System.out.println(cap.getDevice().toString());
-    // print profiles
-    printProfiles(cam);
-    // takeScreenShot(profileToken, cam);
-    // presets
-    // List<PTZPreset> presets = cam.getPtz().getPresets(profileToken);
-    // presets.forEach(x->System.out.println(x.getName()));
+		OnvifDevice cam = null;
+		try {
+			cam = new OnvifDevice(creds.getHost(), creds.getUser(), creds.getPassword());
+		} catch (ConnectException | SOAPException e1) {
+			System.err.println("No connection to device with ip " + creds + ", please try again.");
+			System.exit(0);
+		}
+		System.out.println("Connected to device " + cam.getDeviceInfo());
 
-    EventPortType eventWs = cam.getEvents();
-    GetEventProperties getEventProperties = new GetEventProperties();
-    GetEventPropertiesResponse getEventPropertiesResp =
-        eventWs.getEventProperties(getEventProperties);
-    getEventPropertiesResp.getMessageContentFilterDialect().forEach(x -> System.out.println(x));
-    getEventPropertiesResp.getTopicExpressionDialect().forEach(x -> System.out.println(x));
-    for (Object object : getEventPropertiesResp.getTopicSet().getAny()) {
-      Element e = (Element) object;
-      printTree(e, e.getNodeName());
-    }
+		// get device capabilities
+		Capabilities cap = cam.getDevice().getCapabilities(Arrays.asList(CapabilityCategory.ALL));
+		System.out.println(cap.getDevice().toString());
+		// print profiles
+		printProfiles(cam);
+		// takeScreenShot(profileToken, cam);
+		// presets
+		// List<PTZPreset> presets = cam.getPtz().getPresets(profileToken);
+		// presets.forEach(x->System.out.println(x.getName()));
 
-    org.oasis_open.docs.wsn.b_2.ObjectFactory objectFactory =
-        new org.oasis_open.docs.wsn.b_2.ObjectFactory();
-    CreatePullPointSubscription pullPointSubscription = new CreatePullPointSubscription();
-    FilterType filter = new FilterType();
-    TopicExpressionType topicExp = new TopicExpressionType();
-    topicExp.getContent().add("tns1:RuleEngine//."); // every event in that
-    // topic
-    topicExp.setDialect("http://www.onvif.org/ver10/tev/topicExpression/ConcreteSet");
-    JAXBElement<?> topicExpElem = objectFactory.createTopicExpression(topicExp);
-    filter.getAny().add(topicExpElem);
-    pullPointSubscription.setFilter(filter);
-    org.onvif.ver10.events.wsdl.ObjectFactory eventObjFactory =
-        new org.onvif.ver10.events.wsdl.ObjectFactory();
-    SubscriptionPolicy subcriptionPolicy =
-        eventObjFactory.createCreatePullPointSubscriptionSubscriptionPolicy();
-    pullPointSubscription.setSubscriptionPolicy(subcriptionPolicy);
-    String timespan = "PT10S"; // every 10 seconds
-    // String timespan = "PT1M";//every 1 minute
-    pullPointSubscription.setInitialTerminationTime(
-        objectFactory.createSubscribeInitialTerminationTime(timespan));
+		EventPortType eventWs = cam.getEvents();
+		GetEventProperties getEventProperties = new GetEventProperties();
+		GetEventPropertiesResponse getEventPropertiesResp = eventWs.getEventProperties(getEventProperties);
+		getEventPropertiesResp.getMessageContentFilterDialect().forEach(x -> System.out.println(x));
+		getEventPropertiesResp.getTopicExpressionDialect().forEach(x -> System.out.println(x));
+		for (Object object : getEventPropertiesResp.getTopicSet().getAny()) {
+			Element e = (Element) object;
+			printTree(e, e.getNodeName());
+		}
 
-    try {
-      CreatePullPointSubscriptionResponse resp =
-          eventWs.createPullPointSubscription(pullPointSubscription);
+		org.oasis_open.docs.wsn.b_2.ObjectFactory objectFactory = new org.oasis_open.docs.wsn.b_2.ObjectFactory();
+		CreatePullPointSubscription pullPointSubscription = new CreatePullPointSubscription();
+		FilterType filter = new FilterType();
+		TopicExpressionType topicExp = new TopicExpressionType();
+		topicExp.getContent().add("tns1:RuleEngine//."); // every event in that
+		// topic
+		topicExp.setDialect("http://www.onvif.org/ver10/tev/topicExpression/ConcreteSet");
+		JAXBElement<?> topicExpElem = objectFactory.createTopicExpression(topicExp);
+		filter.getAny().add(topicExpElem);
+		pullPointSubscription.setFilter(filter);
+		org.onvif.ver10.events.wsdl.ObjectFactory eventObjFactory = new org.onvif.ver10.events.wsdl.ObjectFactory();
+		SubscriptionPolicy subcriptionPolicy = eventObjFactory.createCreatePullPointSubscriptionSubscriptionPolicy();
+		System.out.println("subcriptionPolicy: " + subcriptionPolicy);
+		pullPointSubscription.setSubscriptionPolicy(subcriptionPolicy);
+		String timespan = "PT10S"; // every 10 seconds
+		// String timespan = "PT1M";//every 1 minute
+		pullPointSubscription.setInitialTerminationTime(objectFactory.createSubscribeInitialTerminationTime(timespan));
 
-      // Start a consumer that will listen for notification messages
-      // We'll just print the text content out for now.
-      String eventConsumerAddress = "http://localhost:9001/MyConsumer";
-      Consumer consumer =
-          new Consumer(
-              new Consumer.Callback() {
-                public void notify(NotificationMessageHolderType message) {
-                  Object o = message.getMessage().getAny();
-                  System.out.println(message.getMessage().getAny());
-                  if (o instanceof Element) {
-                    System.out.println(((Element) o).getTextContent());
-                  }
-                }
-              },
-              eventConsumerAddress);
+		try {
+			WsNotificationTest.pause(1000, "eventWs.createPullPointSubscription");
+			CreatePullPointSubscriptionResponse resp = eventWs.createPullPointSubscription(pullPointSubscription);
+			WsNotificationTest.pause(100, "resp: " + resp);
 
-      String queuePort = "8182";
-      String brokerPort = "8181";
-      String brokerAddress = "http://localhost:" + brokerPort + "/wsn/NotificationBroker";
-      ActiveMQConnectionFactory activemq =
-          new ActiveMQConnectionFactory(
-              "vm:(broker:(tcp://localhost:" + queuePort + ")?persistent=false)");
-      JaxwsNotificationBroker notificationBrokerServer =
-          new JaxwsNotificationBroker("WSNotificationBroker", activemq);
-      notificationBrokerServer.setAddress(brokerAddress);
-      notificationBrokerServer.init();
+			// Start a consumer that will listen for notification messages
+			// We'll just print the text content out for now.
+			String eventConsumerAddress = "http://localhost:9001/MyConsumer";
+			Consumer consumer = new Consumer(new Consumer.Callback() {
+				public void notify(NotificationMessageHolderType message) {
+					Object o = message.getMessage().getAny();
+					System.out.println(message.getMessage().getAny());
+					if (o instanceof Element) {
+						System.out.println(((Element) o).getTextContent());
+					}
+				}
+			}, eventConsumerAddress);
 
-      // Create a subscription for a Topic on the broker
-      NotificationBroker notificationBroker = new NotificationBroker(brokerAddress);
-      // PublisherCallback publisherCallback = new PublisherCallback();
-      // Publisher publisher = new Publisher(publisherCallback,
-      // "http://localhost:" + port2 + "/test/publisher");
-      Subscription subscription = notificationBroker.subscribe(consumer, "tns1:RuleEngine");
+			String queuePort = "8182";
+			String brokerPort = "8181";
+			String brokerAddress = "http://localhost:" + brokerPort + "/wsn/NotificationBroker";
+			ActiveMQConnectionFactory activemq = new ActiveMQConnectionFactory(
+					"vm:(broker:(tcp://localhost:" + queuePort + ")?persistent=false)");
+			JaxwsNotificationBroker notificationBrokerServer = new JaxwsNotificationBroker("WSNotificationBroker",
+					activemq);
+			notificationBrokerServer.setAddress(brokerAddress);
+			notificationBrokerServer.init();
 
-      // Device
-      // Trigger/Relay
-      // OperationMode/ShutdownInitiated
-      // OperationMode/UploadInitiated
-      // HardwareFailure/FanFailure
-      // HardwareFailure/PowerSupplyFailure
-      // HardwareFailure/StorageFailure
-      // HardwareFailure/TemperatureCritical
-      // VideoSource
-      // tns1:VideoSource/CameraRedirected
-      // tns1:VideoSource/SignalLoss
-      // tns1:VideoSource/MotionAlarm
-      // VideoEncoder
-      // VideoAnalytics
-      // RuleEngine
-      // LineDetector/Crossed
-      // FieldDetector/ObjectsInside
-      // PTZController
-      // PTZPresets/Invoked
-      // PTZPresets/Reached
-      // PTZPresets/Aborted
-      // PTZPresets/Left
-      // AudioSource
-      // AudioEncoder
-      // UserAlarm
-      // MediaControl
-      // RecordingConfig
-      // RecordingHistory
-      // VideoOutput
-      // AudioOutput
-      // VideoDecoder
-      // AudioDecoder
-      // Receiver
-      // MediaConfiguration
-      // VideoSourceConfiguration
-      // AudioSourceConfiguration
-      // VideoEncoderConfiguration
-      // AudioEncoderConfiguration
-      // VideoAnalyticsConfiguration
-      // PTZConfiguration
-      // MetaDataConfiguration
+			// Create a subscription for a Topic on the broker
+			NotificationBroker notificationBroker = new NotificationBroker(brokerAddress);
+			// PublisherCallback publisherCallback = new PublisherCallback();
+			// Publisher publisher = new Publisher(publisherCallback,
+			// "http://localhost:" + port2 + "/test/publisher");
+			Subscription subscription = notificationBroker.subscribe(consumer, "tns1:RuleEngine");
 
-      // Wait for some messages to accumulate in the pull point
-      Thread.sleep(50_000);
+			// Device
+			// Trigger/Relay
+			// OperationMode/ShutdownInitiated
+			// OperationMode/UploadInitiated
+			// HardwareFailure/FanFailure
+			// HardwareFailure/PowerSupplyFailure
+			// HardwareFailure/StorageFailure
+			// HardwareFailure/TemperatureCritical
+			// VideoSource
+			// tns1:VideoSource/CameraRedirected
+			// tns1:VideoSource/SignalLoss
+			// tns1:VideoSource/MotionAlarm
+			// VideoEncoder
+			// VideoAnalytics
+			// RuleEngine
+			// LineDetector/Crossed
+			// FieldDetector/ObjectsInside
+			// PTZController
+			// PTZPresets/Invoked
+			// PTZPresets/Reached
+			// PTZPresets/Aborted
+			// PTZPresets/Left
+			// AudioSource
+			// AudioEncoder
+			// UserAlarm
+			// MediaControl
+			// RecordingConfig
+			// RecordingHistory
+			// VideoOutput
+			// AudioOutput
+			// VideoDecoder
+			// AudioDecoder
+			// Receiver
+			// MediaConfiguration
+			// VideoSourceConfiguration
+			// AudioSourceConfiguration
+			// VideoEncoderConfiguration
+			// AudioEncoderConfiguration
+			// VideoAnalyticsConfiguration
+			// PTZConfiguration
+			// MetaDataConfiguration
 
-      // Cleanup and exit
-      subscription.unsubscribe();
-      consumer.stop();
+			// Wait for some messages to accumulate in the pull point
+			Thread.sleep(50_000);
 
-    } catch (TopicNotSupportedFault
-        | TopicExpressionDialectUnknownFault
-        | InvalidTopicExpressionFault
-        | InvalidMessageContentExpressionFault
-        | InvalidProducerPropertiesExpressionFault
-        | UnacceptableInitialTerminationTimeFault
-        | NotifyMessageNotSupportedFault
-        | ResourceUnknownFault
-        | UnsupportedPolicyRequestFault
-        | InvalidFilterFault
-        | SubscribeCreationFailedFault
-        | UnrecognizedPolicyRequestFault e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    } catch (InterruptedException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    } catch (Exception e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
-  }
+			// Cleanup and exit
+			subscription.unsubscribe();
+			consumer.stop();
 
-  public static void printTree(Node node, String name) {
-    if (node.hasChildNodes()) {
-      NodeList nodes = node.getChildNodes();
-      for (int i = 0; i < nodes.getLength(); i++) {
-        Node n = nodes.item(i);
-        printTree(n, name + " - " + n.getNodeName());
-      }
-    } else System.out.println(name + " - " + node.getNodeName());
-  }
+		} catch (TopicNotSupportedFault | TopicExpressionDialectUnknownFault | InvalidTopicExpressionFault
+				| InvalidMessageContentExpressionFault | InvalidProducerPropertiesExpressionFault
+				| UnacceptableInitialTerminationTimeFault | NotifyMessageNotSupportedFault | ResourceUnknownFault
+				| UnsupportedPolicyRequestFault | InvalidFilterFault | SubscribeCreationFailedFault
+				| UnrecognizedPolicyRequestFault e) {
+			// TODO Auto-generated catch block
+			System.err.println("ERROR 0");
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			System.err.println("ERROR 1");
+			e.printStackTrace();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			System.err.println("ERROR 2");
+			e.printStackTrace();
+		}
+	}
 
-  private static void takeScreenShot(String profileToken, OnvifDevice cam) {
-    try {
-      MediaUri sceenshotUri = cam.getMedia().getSnapshotUri(profileToken);
-      File tempFile = File.createTempFile("bosc", ".jpg");
-      // tempFile.deleteOnExit();
-      FileUtils.copyURLToFile(new URL(sceenshotUri.getUri()), tempFile);
-      Runtime.getRuntime().exec("nautilus " + tempFile.getAbsolutePath());
-      Thread.sleep(10000);
-    } catch (ConnectException e) {
-      e.printStackTrace();
-    } catch (IOException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    } catch (InterruptedException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
-  }
+	public static void printTree(Node node, String name) {
+		if (node.hasChildNodes()) {
+			NodeList nodes = node.getChildNodes();
+			for (int i = 0; i < nodes.getLength(); i++) {
+				Node n = nodes.item(i);
+				printTree(n, name + " - " + n.getNodeName());
+			}
+		} else
+			System.out.println(name + " - " + node.getNodeName());
+	}
 
-  private static void printProfiles(OnvifDevice cam) {
+	private static void takeScreenShot(String profileToken, OnvifDevice cam) {
+		try {
+			MediaUri sceenshotUri = cam.getMedia().getSnapshotUri(profileToken);
+			File tempFile = File.createTempFile("bosc", ".jpg");
+			// tempFile.deleteOnExit();
+			FileUtils.copyURLToFile(new URL(sceenshotUri.getUri()), tempFile);
+			Runtime.getRuntime().exec("nautilus " + tempFile.getAbsolutePath());
+			Thread.sleep(10000);
+		} catch (ConnectException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 
-    List<Profile> profiles = cam.getMedia().getProfiles();
-    for (Profile p : profiles) {
-      System.out.printf(
-          "Profile: [token=%s,name=%s,snapshotUri=%s]%n",
-          p.getToken(), p.getName(), cam.getMedia().getSnapshotUri(p.getToken()).getUri());
-    }
-  }
+	private static void printProfiles(OnvifDevice cam) {
 
-  public static class PublisherCallback implements Publisher.Callback {
-    final CountDownLatch subscribed = new CountDownLatch(1);
-    final CountDownLatch unsubscribed = new CountDownLatch(1);
+		List<Profile> profiles = cam.getMedia().getProfiles();
+		for (Profile p : profiles) {
+			String snapshotUri;
+			try {
+				snapshotUri = cam.getMedia().getSnapshotUri(p.getToken()).getUri();
+			} catch (Exception e) {
+				snapshotUri = e.getMessage();
+			}
+			System.out.printf("Profile: [token=%s,name=%s,snapshotUri=%s]%n", p.getToken(), p.getName(),
+					snapshotUri );
+		}
+	}
 
-    public void subscribe(TopicExpressionType topic) {
-      subscribed.countDown();
-    }
+	public static class PublisherCallback implements Publisher.Callback {
+		final CountDownLatch subscribed = new CountDownLatch(1);
+		final CountDownLatch unsubscribed = new CountDownLatch(1);
 
-    public void unsubscribe(TopicExpressionType topic) {
-      unsubscribed.countDown();
-    }
-  }
+		public void subscribe(TopicExpressionType topic) {
+			subscribed.countDown();
+		}
+
+		public void unsubscribe(TopicExpressionType topic) {
+			unsubscribed.countDown();
+		}
+	}
 }
