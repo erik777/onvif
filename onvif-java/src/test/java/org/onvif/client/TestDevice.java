@@ -13,6 +13,8 @@ import org.onvif.ver10.events.wsdl.GetEventProperties;
 import org.onvif.ver10.events.wsdl.GetEventPropertiesResponse;
 import org.onvif.ver10.media.wsdl.Media;
 import org.onvif.ver10.schema.AudioSource;
+import org.onvif.ver10.schema.Config;
+import org.onvif.ver10.schema.ConfigDescription;
 import org.onvif.ver10.schema.MetadataConfiguration;
 import org.onvif.ver10.schema.PTZPreset;
 import org.onvif.ver10.schema.PTZStatus;
@@ -142,31 +144,12 @@ public class TestDevice {
 			if (aConfigs != null && aConfigs.size() > 0) {
 				out += "MetadataConfiguration items: " + aConfigs.size() + sep;
 				for (MetadataConfiguration cfg : aConfigs)
-					
 					out += "\t" + cfg.getName() + ": " + cfg.toString() + sep;
 			} else {
 				out += "No MetadataConfiguration items returned" + sep;
 			}
-			//here
 		} catch (Throwable th) {
 			out += "! ERROR Cannot obtain media.getMetadataConfigurations(): " + th.getMessage() + sep;
-		}
-
-    	try {
-			List<VideoAnalyticsConfiguration> aConfigs = media.getVideoAnalyticsConfigurations();
-			if (aConfigs != null && aConfigs.size() > 0) {
-				out += "VideoAnalyticsConfiguration items: " + aConfigs.size() + sep;
-				
-			} else {
-				out += "No VideoAnalyticsConfiguration items returned" + sep;
-			}
-			//here
-		} catch (Throwable th) {
-			out += "! ERROR Cannot obtain media.getVideoAnalyticsConfigurations(): " + th.getMessage() + sep;
-			// Cannot obtain media.getVideoAnalyticsConfigurations(): 
-			// Can not set org.onvif.ver10.schema.Object field org.onvif.ver10.schema.ItemList$ElementItem.any to 
-			// com.sun.org.apache.xerces.internal.dom.ElementNSImpl
-
 		}
 
 		try {
@@ -235,11 +218,47 @@ public class TestDevice {
 			}
 		}
 		
+    	// analytics
+		VideoAnalyticsConfiguration vac = null;
+    	try {
+			List<VideoAnalyticsConfiguration> aConfigs = media.getVideoAnalyticsConfigurations();
+			
+			if (aConfigs != null && aConfigs.size() > 0) {
+				out += "VideoAnalyticsConfiguration items: " + aConfigs.size() + sep;
+				for (VideoAnalyticsConfiguration cfg : aConfigs)
+					out += "\t" + cfg.getName() + ": " + cfg.toString() + sep;
+				vac = aConfigs.get(0);   // use below for rules
+			} else {
+				out += "No VideoAnalyticsConfiguration items returned" + sep;
+			}
+			//here
+		} catch (Throwable th) {
+			out += "! ERROR Cannot obtain media.getVideoAnalyticsConfigurations(): " + th.getMessage() + sep;
+			// Cannot obtain media.getVideoAnalyticsConfigurations(): 
+			// Can not set org.onvif.ver10.schema.Object field org.onvif.ver10.schema.ItemList$ElementItem.any to 
+			// com.sun.org.apache.xerces.internal.dom.ElementNSImpl
+
+		}
+
 		try {
 			org.onvif.ver20.analytics.wsdl.Capabilities ae_caps = device.getAnalyticsEngine().getServiceCapabilities();
 			out += "Analytics Engine:" + sep;
 			out += "\tgetServiceCapabilities=" + OnvifUtils.format(ae_caps) + sep;
+//			List<Config> configs = device.getAnalyticsEngine().getAnalyticsModules("analytics0");
+//			out += "Analytics modules for analytics0: " + configs.size() + sep;
+			if (vac != null) {
+				List<Config> rules = device.getRulesEngine().getRules(vac.getName());
+				out += "\tRules: " + rules.size() + sep;
+				rules = device.getRulesEngine().getRules("blah");
+				out += "\tRules: " + rules.size() + sep;
+			}
+//			device.getRulesEngine().
+			//here
+			// 	roof: getServiceCapabilities=[any=,ruleSupport=true,analyticsModuleSupport=false,cellBasedSceneDescriptionSupported=,ruleOptionsSupported=true,analyticsModuleOptionsSupported=,supportedMetadata=,imageSendingType=,otherAttributes={}]
+
+//			device.getRulesEngine().getRules();
 		} catch (Exception e) {
+			out += "AnalyticsEngine Exception: " + e.getMessage() + sep;
 		} catch (Throwable th) {
 			out += "AnalyticsEngine Unavailable: " + th.getMessage() + sep;
 		}
@@ -248,7 +267,6 @@ public class TestDevice {
 	}
 
 	public static void printTree(Node node, String name, StringBuffer buffer) {
-
 		if (node.hasChildNodes()) {
 			NodeList nodes = node.getChildNodes();
 			for (int i = 0; i < nodes.getLength(); i++) {
