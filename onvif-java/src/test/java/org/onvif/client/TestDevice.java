@@ -15,6 +15,8 @@ import org.onvif.ver10.media.wsdl.Media;
 import org.onvif.ver10.schema.AudioSource;
 import org.onvif.ver10.schema.Config;
 import org.onvif.ver10.schema.ConfigDescription;
+import org.onvif.ver10.schema.ItemList;
+import org.onvif.ver10.schema.ItemList.SimpleItem;
 import org.onvif.ver10.schema.MetadataConfiguration;
 import org.onvif.ver10.schema.PTZPreset;
 import org.onvif.ver10.schema.PTZStatus;
@@ -220,45 +222,89 @@ public class TestDevice {
 		
     	// analytics
 		VideoAnalyticsConfiguration vac = null;
+		
     	try {
 			List<VideoAnalyticsConfiguration> aConfigs = media.getVideoAnalyticsConfigurations();
-			
 			if (aConfigs != null && aConfigs.size() > 0) {
+				vac = aConfigs.get(0);   // used below for rules
 				out += "VideoAnalyticsConfiguration items: " + aConfigs.size() + sep;
-				for (VideoAnalyticsConfiguration cfg : aConfigs)
-					out += "\t" + cfg.getName() + ": " + cfg.toString() + sep;
-				vac = aConfigs.get(0);   // use below for rules
+				for (VideoAnalyticsConfiguration cfg : aConfigs) {
+					out += "\tName: " + cfg.getName() + ", Token: " + cfg.getToken() + ": " + cfg.toString() + sep;
+					List<Config> modules = device.getAnalyticsEngine().getAnalyticsModules(cfg.getToken());
+					if (modules != null) {
+						out +=  "\t\tModules: " + modules.size() + sep;
+						for (Config module : modules) {
+							// List module parameters
+							ItemList params = module.getParameters();
+							out += "\t\t\tName: " + module.getName() + ", type: " + module.getType() + ", params: " + params + sep;
+							if (params != null) {
+								for (SimpleItem item : params.getSimpleItem()) {
+									out += "\t\t\t\tParam: " + item.getName() + sep;
+								}
+							}
+						}
+					}
+					
+					// other attributes
+					if (cfg.getOtherAttributes() != null) {
+						out += "\t\tgetOtherAttributes: " + cfg.getOtherAttributes().size() + sep;
+					}
+
+				}
 			} else {
 				out += "No VideoAnalyticsConfiguration items returned" + sep;
 			}
+			out += "\t\tprofile getRule " +
+					  media.getVideoAnalyticsConfiguration("0").getRuleEngineConfiguration()
+					  .getRule() + sep;
+			out += "\t\tprofile getExtension " +
+					  media.getVideoAnalyticsConfiguration("0").getRuleEngineConfiguration()
+					  .getExtension() +
+					  sep;
+			out += "\t\tprofile getOtherAttributes " +
+					  media.getVideoAnalyticsConfiguration("0").getRuleEngineConfiguration()
+					  .getOtherAttributes().size() +
+					  sep;
 			//here
 		} catch (Throwable th) {
 			out += "! ERROR Cannot obtain media.getVideoAnalyticsConfigurations(): " + th.getMessage() + sep;
 			// Cannot obtain media.getVideoAnalyticsConfigurations(): 
 			// Can not set org.onvif.ver10.schema.Object field org.onvif.ver10.schema.ItemList$ElementItem.any to 
 			// com.sun.org.apache.xerces.internal.dom.ElementNSImpl
-
 		}
 
 		try {
 			org.onvif.ver20.analytics.wsdl.Capabilities ae_caps = device.getAnalyticsEngine().getServiceCapabilities();
 			out += "Analytics Engine:" + sep;
 			out += "\tgetServiceCapabilities=" + OnvifUtils.format(ae_caps) + sep;
+			
 //			List<Config> configs = device.getAnalyticsEngine().getAnalyticsModules("analytics0");
 //			out += "Analytics modules for analytics0: " + configs.size() + sep;
+			String token ;
+			
 			if (vac != null) {
-				List<Config> rules = device.getRulesEngine().getRules(vac.getName());
-				out += "\tRules: " + rules.size() + sep;
-				rules = device.getRulesEngine().getRules("blah");
-				out += "\tRules: " + rules.size() + sep;
+				token = vac.getToken();
+				System.out.println("Using vac.getToken(): " + token);
+			} else {
+				token = "0";   // temp workaround getVideoAnalyticsConfigurations() error for now
+				System.out.println("Using temp token for getVideoAnalyticsConfigurations(): " + token);
 			}
-//			device.getRulesEngine().
+			if (device.getRulesEngine() != null) {
+				out += "\tRules Engine: token: " + token + sep;
+				device.getRulesEngine().getSupportedRules(token);
+				List<Config> rules = device.getRulesEngine().getRules(token);
+				out += "\t\tRules: " + rules.size() + sep;
+				for (Config rule : rules) {
+					out += "\t\t\tName: " + rule.getName();
+				}
+			} else {
+				out += "\tNo rules engine" + sep;
+			}
 			//here
 			// 	roof: getServiceCapabilities=[any=,ruleSupport=true,analyticsModuleSupport=false,cellBasedSceneDescriptionSupported=,ruleOptionsSupported=true,analyticsModuleOptionsSupported=,supportedMetadata=,imageSendingType=,otherAttributes={}]
-
-//			device.getRulesEngine().getRules();
 		} catch (Exception e) {
 			out += "AnalyticsEngine Exception: " + e.getMessage() + sep;
+			e.printStackTrace();
 		} catch (Throwable th) {
 			out += "AnalyticsEngine Unavailable: " + th.getMessage() + sep;
 		}
