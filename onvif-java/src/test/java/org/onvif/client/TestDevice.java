@@ -23,6 +23,7 @@ import org.onvif.ver10.schema.PTZStatus;
 import org.onvif.ver10.schema.Profile;
 import org.onvif.ver10.schema.VideoAnalyticsConfiguration;
 import org.onvif.ver10.schema.VideoSource;
+import org.onvif.ver20.analytics.wsdl.AnalyticsEnginePort;
 import org.onvif.ver20.imaging.wsdl.ImagingPort;
 import org.onvif.ver20.ptz.wsdl.Capabilities;
 import org.onvif.ver20.ptz.wsdl.PTZ;
@@ -94,6 +95,8 @@ public class TestDevice {
 				String metaToken = profile.getMetadataConfiguration().getToken();
 				out += "\t\tmetadata token: " + metaToken + sep;
 //				out += "\t\tmetadata stream: " + device.getStreamUri(new Integer(metaToken)) + sep;
+			} else {
+				out += "\t\tgetMetadataConfiguration: " + null + sep;
 			}
 			pause(pauseTime, "getSnapshotUri... ");
 			try {
@@ -145,8 +148,15 @@ public class TestDevice {
     		List<MetadataConfiguration> aConfigs = media.getMetadataConfigurations();
 			if (aConfigs != null && aConfigs.size() > 0) {
 				out += "MetadataConfiguration items: " + aConfigs.size() + sep;
-				for (MetadataConfiguration cfg : aConfigs)
+				for (MetadataConfiguration cfg : aConfigs) {
 					out += "\t" + cfg.getName() + ": " + cfg.toString() + sep;
+					out += "\t\t Analytics? " + cfg.getAnalytics() + sep;
+					if ("user0".equals(cfg.getName())) {
+						// update 
+						cfg.setAnalytics(true);
+						media.setMetadataConfiguration(cfg, false);
+					}
+				}
 			} else {
 				out += "No MetadataConfiguration items returned" + sep;
 			}
@@ -222,15 +232,19 @@ public class TestDevice {
 		
     	// analytics
 		VideoAnalyticsConfiguration vac = null;
-		
+		String task = "obtain media.getVideoAnalyticsConfigurations()";
     	try {
 			List<VideoAnalyticsConfiguration> aConfigs = media.getVideoAnalyticsConfigurations();
 			if (aConfigs != null && aConfigs.size() > 0) {
 				vac = aConfigs.get(0);   // used below for rules
 				out += "VideoAnalyticsConfiguration items: " + aConfigs.size() + sep;
+				task = "iterating configs";
+				AnalyticsEnginePort analyticsEngine = device.getAnalyticsEngine();
 				for (VideoAnalyticsConfiguration cfg : aConfigs) {
 					out += "\tName: " + cfg.getName() + ", Token: " + cfg.getToken() + ": " + cfg.toString() + sep;
-					List<Config> modules = device.getAnalyticsEngine().getAnalyticsModules(cfg.getToken());
+					task = "iterating configs - getting modules for token " + cfg.getToken();
+					List<Config> modules = analyticsEngine.getAnalyticsModules(cfg.getToken());
+					task = "...iterating configs - getting modules for token " + cfg.getToken();
 					if (modules != null) {
 						out +=  "\t\tModules: " + modules.size() + sep;
 						for (Config module : modules) {
@@ -267,7 +281,7 @@ public class TestDevice {
 					  sep;
 			//here
 		} catch (Throwable th) {
-			out += "! ERROR Cannot obtain media.getVideoAnalyticsConfigurations(): " + th.getMessage() + sep;
+			out += "! ERROR Cannot " + task + ": " + th.getMessage() + sep;
 			// Cannot obtain media.getVideoAnalyticsConfigurations(): 
 			// Can not set org.onvif.ver10.schema.Object field org.onvif.ver10.schema.ItemList$ElementItem.any to 
 			// com.sun.org.apache.xerces.internal.dom.ElementNSImpl
