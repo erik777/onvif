@@ -321,12 +321,24 @@ public class TestDevice {
 				for (Config rule : rules) {
 					out += "\t\t\tName: " + rule.getName();
 				}
+				
+				// Try to create a rule
+				Config newRule = new Config();
+				newRule.setName("myrule");
+				rules.add(newRule);
+				task = "creating rules";
+				out += "\t\t\t creating rules..." + sep;
+				device.getRulesEngine().createRules(token, rules);
+				out += "\t\t\t creating rules....." + sep;
+				device.getRulesEngine().createRules("myconfig", rules);
+				out += "\t\t\t created rules" + sep;
 			} else {
 				out += "\tNo rules engine" + sep;
 			}
 			//here
 			// 	roof: getServiceCapabilities=[any=,ruleSupport=true,analyticsModuleSupport=false,cellBasedSceneDescriptionSupported=,ruleOptionsSupported=true,analyticsModuleOptionsSupported=,supportedMetadata=,imageSendingType=,otherAttributes={}]
 		} catch (Exception e) {
+			out += "! ERROR Cannot " + task + ": " + e.getMessage() + sep;
 			out += "AnalyticsEngine Exception: " + e.getMessage() + sep;
 			e.printStackTrace();
 		} catch (Throwable th) {
