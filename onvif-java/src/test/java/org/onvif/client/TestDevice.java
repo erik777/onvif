@@ -8,6 +8,7 @@ import java.net.URL;
 import java.util.List;
 import javax.xml.soap.SOAPException;
 import org.onvif.ver10.device.wsdl.DeviceServiceCapabilities;
+import org.onvif.ver10.events.wsdl.EventBrokerConfig;
 import org.onvif.ver10.events.wsdl.EventPortType;
 import org.onvif.ver10.events.wsdl.GetEventProperties;
 import org.onvif.ver10.events.wsdl.GetEventPropertiesResponse;
@@ -176,13 +177,17 @@ public class TestDevice {
 			out += "AudioSources Unavailable: " + th.getMessage() + sep;
 		}
 
-		boolean showTopics = false;
+		// https://www.onvif.org/wp-content/uploads/2021/06/ONVIF_Event_Handling_Device_Test_Specification_21.06.pdf?ccc393&ccc393
+		boolean showTopics = true;
 		try {
 			EventPortType events = device.getEvents();
 			if (events != null) {
+				out += "===================================" + sep;
 				out += "Events:" + sep;
 				pause(pauseTime, "getServiceCapabilities... ");
-				out += "\tgetServiceCapabilities=" + OnvifUtils.format(events.getServiceCapabilities()) + sep;
+				org.onvif.ver10.events.wsdl.Capabilities eventCap = events.getServiceCapabilities();
+				out += "\tgetServiceCapabilities=" + OnvifUtils.format(eventCap) + sep;
+				out += "\t\t eventCap.getAny().size()=" + eventCap.getAny().size() + sep;
 
 				pause(pauseTime, "getEventProperties... ");
 				GetEventProperties getEventProperties = new GetEventProperties();
@@ -204,12 +209,16 @@ public class TestDevice {
 					}
 					out += tree;
 				}
+				
+				List<EventBrokerConfig> brokers = events.getEventBrokers(null);
 			}
 		} catch (Throwable th) {
 			out += "Events Unavailable: " + th.getMessage() + sep;
+//			th.printStackTrace();
 		}
 		PTZ ptz = device.getPtz();
 		if (ptz != null) {
+			out += "===================================" + sep;
 
 			String profileToken = profiles.get(0).getToken();
 			try {
@@ -236,6 +245,7 @@ public class TestDevice {
     	try {
 			List<VideoAnalyticsConfiguration> aConfigs = media.getVideoAnalyticsConfigurations();
 			if (aConfigs != null && aConfigs.size() > 0) {
+				out += "===================================" + sep;
 				vac = aConfigs.get(0);   // used below for rules
 				out += "VideoAnalyticsConfiguration items: " + aConfigs.size() + sep;
 				task = "iterating configs";

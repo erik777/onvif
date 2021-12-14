@@ -20,6 +20,10 @@
     rewritePrefix="local/www.onvif.org/ver20/analytics/humanface.xsd"/>
   <rewriteURI uriStartString="../../ver20/analytics/humanbody.xsd"
     rewritePrefix="local/www.onvif.org/ver20/analytics/humanbody.xsd"/>
+  <rewriteURI uriStartString="../../ver20/analytics/rules.xsd"
+    rewritePrefix="local/www.onvif.org/ver20/analytics/rules.xsd"/>
+  <rewriteURI uriStartString="../../ver20/analytics/radiometry.xsd"
+    rewritePrefix="local/www.onvif.org/ver20/analytics/radiometry.xsd"/>
     
   <rewriteURI uriStartString="types.xsd" rewritePrefix="local/www.onvif.org/ver10/pacs/types.xsd"/>
   <rewriteURI uriStartString="../../pacs/types.xsd"
