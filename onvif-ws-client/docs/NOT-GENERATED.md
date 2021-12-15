@@ -3,6 +3,8 @@ Service classes such as the following are not generated from original ONVIF wsdl
 org.onvif.ver10.device.wsdl.DeviceService
 org.onvif.ver10.events.wsdl.EventService
 org.onvif.ver10.media.wsdl.MediaService
+org.onvif.ver20.imaging.wsdl.ImagingService
+org.onvif.ver20.ptz.wsdl.PtzService
 
 In order to generate, you need to update new wsdl with a service section near the end when bringing in any new ONVIF wsdl.
 
