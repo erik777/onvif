@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SOAP-ENV:Envelope
+	xmlns:SOAP-ENV="http://www.w3.org/2003/05/soap-envelope"
+	xmlns:SOAP-ENC="http://www.w3.org/2003/05/soap-encoding"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	xmlns:c14n="http://www.w3.org/2001/10/xml-exc-c14n#"
+	xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"
+	xmlns:ds="http://www.w3.org/2000/09/xmldsig#"
+	xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"
+	xmlns:wsa5="http://www.w3.org/2005/08/addressing"
+	xmlns:tt="http://www.onvif.org/ver10/schema"
+	xmlns:tns1="http://www.onvif.org/ver10/topics"
+	xmlns:axt="http://www.onvif.org/ver20/analytics"
+	xmlns:tan="http://www.onvif.org/ver20/analytics/wsdl"
+	xmlns:ter="http://www.onvif.org/ver10/error">
+	<SOAP-ENV:Header></SOAP-ENV:Header>
+	<SOAP-ENV:Body>
+		<tan:GetRulesResponse></tan:GetRulesResponse>
+	</SOAP-ENV:Body>
+</SOAP-ENV:Envelope>
