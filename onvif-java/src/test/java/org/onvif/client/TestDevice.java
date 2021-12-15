@@ -63,6 +63,11 @@ public class TestDevice {
 	public static String inspect(OnvifDevice device) {
 		System.out.println("inspect...");
 
+		// Filter test output
+		boolean showTopics = false;
+		boolean showMediaProfiles = true;
+		boolean tryCreateRules = false;
+
 		String out = "";
 		pause(pauseTime, "info...");
 		DeviceInfo info = device.getDeviceInfo();
@@ -80,35 +85,40 @@ public class TestDevice {
 		System.out.println("media... ");
 		Media media = device.getMedia();
 
-		pause(pauseTime, "video sources... ");
-		media.getVideoSources();
-		pause(pauseTime, "profiles... ");
-		List<Profile> profiles = media.getProfiles();
-		out += "Media Profiles: " + profiles.size() + sep;
-		for (Profile profile : profiles) {
-			String profileToken = profile.getToken();
-			pause(pauseTime, "stream uri... profile token: " + profileToken);
-			String rtsp = device.getStreamUri(profileToken);
-			out += "\tProfile: " + profile.getName() + " token=" + profile.getToken() + sep;
-			out += "\t\tstream: " + rtsp + sep;
-			if (profile.getMetadataConfiguration() != null) {
-//				profile.getMetadataConfiguration().get;
-				String metaToken = profile.getMetadataConfiguration().getToken();
-				out += "\t\tmetadata token: " + metaToken + sep;
-//				out += "\t\tmetadata stream: " + device.getStreamUri(new Integer(metaToken)) + sep;
-			} else {
-				out += "\t\tgetMetadataConfiguration: " + null + sep;
+//		pause(pauseTime, "video sources... ");
+//		List<VideoSource> videoSources = media.getVideoSources();
+//		out += "Video sources: " + videoSources.size() + sep;
+		
+		List<Profile> profiles = null;
+		if (showMediaProfiles) {
+			pause(pauseTime, "profiles... ");
+			profiles = media.getProfiles();
+			out += "Media Profiles: " + profiles.size() + sep;
+			for (Profile profile : profiles) {
+				String profileToken = profile.getToken();
+				pause(pauseTime, "stream uri... profile token: " + profileToken);
+				String rtsp = device.getStreamUri(profileToken);
+				out += "\tProfile: " + profile.getName() + " token=" + profile.getToken() + sep;
+				out += "\t\tstream: " + rtsp + sep;
+				if (profile.getMetadataConfiguration() != null) {
+					String metaToken = profile.getMetadataConfiguration().getToken();
+					out += "\t\tmetadata token: " + metaToken + sep;
+//					out += "\t\tmetadata stream: " + device.getStreamUri(new Integer(metaToken)) + sep;
+//					out += "\t\tmetadata stream: " + device.getStreamUri(metaToken) + sep;
+				} else {
+					out += "\t\tgetMetadataConfiguration: " + null + sep;
+				}
+				pause(pauseTime, "getSnapshotUri... ");
+				try {
+					out += "\t\tsnapshot: " + device.getSnapshotUri(profileToken) + sep;
+				} catch (Exception e) {
+					out += "\t\tsnapshot: " + e.getMessage() + sep;
+				}
+				out += "\t\tdetails:" + OnvifUtils.format(profile) + sep;
 			}
-			pause(pauseTime, "getSnapshotUri... ");
-			try {
-				out += "\t\tsnapshot: " + device.getSnapshotUri(profileToken) + sep;
-			} catch (Exception e) {
-				out += "\t\tsnapshot: " + e.getMessage() + sep;
-			}
-			out += "\t\tdetails:" + OnvifUtils.format(profile) + sep;
 		}
-		pause(pauseTime, "getVideoSources... ");
 
+		pause(pauseTime, "getVideoSources... ");
 		try {
 			List<VideoSource> videoSources = media.getVideoSources();
 			out += "VideoSources: " + videoSources.size() + sep;
@@ -178,7 +188,6 @@ public class TestDevice {
 		}
 
 		// https://www.onvif.org/wp-content/uploads/2021/06/ONVIF_Event_Handling_Device_Test_Specification_21.06.pdf?ccc393&ccc393
-		boolean showTopics = true;
 		try {
 			EventPortType events = device.getEvents();
 			if (events != null) {
@@ -216,26 +225,30 @@ public class TestDevice {
 			out += "Events Unavailable: " + th.getMessage() + sep;
 //			th.printStackTrace();
 		}
-		PTZ ptz = device.getPtz();
-		if (ptz != null) {
-			out += "===================================" + sep;
-
-			String profileToken = profiles.get(0).getToken();
-			try {
-				Capabilities ptz_caps = ptz.getServiceCapabilities();
-				out += "PTZ:" + sep;
-				out += "\tgetServiceCapabilities=" + OnvifUtils.format(ptz_caps) + sep;
-				PTZStatus s = ptz.getStatus(profileToken);
-				out += "\tgetStatus=" + OnvifUtils.format(s) + sep;
-				// out += "ptz.getConfiguration=" + ptz.getConfiguration(profileToken) + sep;
-				List<PTZPreset> presets = ptz.getPresets(profileToken);
-				if (presets != null && !presets.isEmpty()) {
-					out += "\tPresets:" + presets.size() + sep;
-					for (PTZPreset p : presets)
-						out += "\t\t" + OnvifUtils.format(p) + sep;
+		
+		// no profiles if showMediaProfiles = false
+		if (profiles != null) {
+			PTZ ptz = device.getPtz();
+			if (ptz != null) {
+				out += "===================================" + sep;
+	
+				String profileToken = profiles.get(0).getToken();
+				try {
+					Capabilities ptz_caps = ptz.getServiceCapabilities();
+					out += "PTZ:" + sep;
+					out += "\tgetServiceCapabilities=" + OnvifUtils.format(ptz_caps) + sep;
+					PTZStatus s = ptz.getStatus(profileToken);
+					out += "\tgetStatus=" + OnvifUtils.format(s) + sep;
+					// out += "ptz.getConfiguration=" + ptz.getConfiguration(profileToken) + sep;
+					List<PTZPreset> presets = ptz.getPresets(profileToken);
+					if (presets != null && !presets.isEmpty()) {
+						out += "\tPresets:" + presets.size() + sep;
+						for (PTZPreset p : presets)
+							out += "\t\t" + OnvifUtils.format(p) + sep;
+					}
+				} catch (Throwable th) {
+					out += "PTZ: Unavailable" + th.getMessage() + sep;
 				}
-			} catch (Throwable th) {
-				out += "PTZ: Unavailable" + th.getMessage() + sep;
 			}
 		}
 		
@@ -322,16 +335,18 @@ public class TestDevice {
 					out += "\t\t\tName: " + rule.getName();
 				}
 				
-				// Try to create a rule
-				Config newRule = new Config();
-				newRule.setName("myrule");
-				rules.add(newRule);
-				task = "creating rules";
-				out += "\t\t\t creating rules..." + sep;
-				device.getRulesEngine().createRules(token, rules);
-				out += "\t\t\t creating rules....." + sep;
-				device.getRulesEngine().createRules("myconfig", rules);
-				out += "\t\t\t created rules" + sep;
+				if (tryCreateRules) {
+					// Try to create a rule
+					Config newRule = new Config();
+					newRule.setName("myrule");
+					rules.add(newRule);
+					task = "creating rules";
+					out += "\t\t\t creating rules..." + sep;
+					device.getRulesEngine().createRules(token, rules);
+					out += "\t\t\t creating rules....." + sep;
+					device.getRulesEngine().createRules("myconfig", rules);
+					out += "\t\t\t created rules" + sep;
+				}
 			} else {
 				out += "\tNo rules engine" + sep;
 			}
