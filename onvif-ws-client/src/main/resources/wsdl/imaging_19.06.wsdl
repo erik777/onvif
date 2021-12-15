@@ -600,4 +600,14 @@ IN NO EVENT WILL THE CORPORATION OR ITS MEMBERS OR THEIR AFFILIATES BE LIABLE FO
 			</wsdl:output>
 		</wsdl:operation>
 	</wsdl:binding>
+	
+	<!--===============================-->
+	<!--===============================-->
+
+  <wsdl:service name="ImagingService">
+    <wsdl:port name="ImagingPort" binding="timg:ImagingBinding">
+      <soap:address location="http://www.onvif.org/ver20/imaging/wsdl"/>
+    </wsdl:port>
+  </wsdl:service>
+	
 </wsdl:definitions>
